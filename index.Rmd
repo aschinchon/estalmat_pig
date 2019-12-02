@@ -1,0 +1,465 @@
+---
+title: "El juego del cerdo - ESTALMAT 2019"
+author: "Antonio Sánchez Chinchón"
+date: "12/11/2019"
+output: 
+  html_document:
+    css: custom.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+
+<img src="1200px-Porky_Pig.png" class="center"/>
+
+
+## El juego
+
+El siguiente texto está extraído de *El Libro de las Matemáticas*, de Clifford A. Pickover[^1] y describe el juego del cerdo:
+
+> El juego del cerdo es un juego de reglas sencillas, aunque con estrategias y análisis sorprendentemente complejos. Tiene relevancia como metáfora para muchos problemas, aparentemente sencillos, que dieron lugar años después a provechosas investigaciones matemáticas y como herramienta de enseñanza utilizada por numerosos educadores para tratar el tema de la estrategia en los juegos.
+
+> El juego del cerdo fue descrito por primera vez en 1945 por John Scarne, un mago estadounidense experto en juegos, cartomago e inventor, a pesar de que el juego se basa en *juegos populares* anteriores con diferentes variaciones. Para jugar a este juego, un jugador tira un dado hasta que sale 1 o hasta que decide *plantarse* y sumar las tiradas de su turno. En caso de que al jugador le salga un 1, no suma ningún punto y el turno pasa al oponente. Gana el primer jugador que alcance 100 o más puntos. Ejemplo: tú sacas un 3. Decides tirar otra vez y sacas 1. Entonces no sumas puntos y le pasas el dado a tu oponente. Este tira la secuencia 3-4-6 y decide plantarse. De este modo sumará 13 puntos a su tanteo y te devolverá el dado.
+
+> El juego del cerdo se considera un juego de dados de *arriesgar* debido a que los jugadores deben decidir si arriesgan lo ganado anteriormente tirando de nuevo para obtener más puntos adicionales. En 2004, los científicos informáticos Todd W. Neller y Clifton Presser del Gettysburg College de Pensilvania analizaron el juego del cerdo de forma detallada para dilucidar una estrategia de juego óptima. Utilizando las matemáticas y sirviéndose de gráficos informáticos, descubrieron una estrategia complicada y nada intuitiva para ganar y demostraron por qué jugar para ganar más puntos en un turno es claramente diferente a jugar para ganar. En lo que respecta a los resultados y las visualizaciones sobre las mejores pautas, indicaron de forma poética que ver el panorama de estas pautas es como ver con claridad por primera vez la superficie de un planeta lejano, cuando antes tan solo se habían visto imágenes borrosas. 
+
+Hoy vamos a jugar a ser Todd W. Neller y Clifton Presser.
+
+
+Lo primero que vamos a hacer es cargar la librería tidyverse, que es la única que vamos a necesitar para este experimento, Con ella podremos entre otras cosas, visualizar los resultados gracias a la función `ggplot2`:
+
+```{r, eval = FALSE}
+library(tidyverse)
+```
+
+Vamos a empezar simulando un único jugador con una estrategia muy simple: hacer como mucho 5 tiradas en cada ronda. Para programarlo en R vamos a tener en cuenta las siguientes cosas:
+
++ La variable `max_tiradas` va a recoger el número máximo de tiradas que va a hacer el jugador, en este caso 5.
++ La variable `total_puntos` va a recoger el total de puntos que lleva el jugador después de cada ronda. Cuando esta variable sea >= 100 el juego habrá terminado.
++ El vector `evolu_puntos` recogerá los puntos al final de cada ronda. Así podremos ver cuántas rondas tarda en llegar a 100 puntos y cuál ha sido la evolución.
++ Vamos a necesitar otra variable llamada `parcial` que vaya registrando los puntos que va haciendo el jugador en cada ronda. Al principio de cada una de ellas tomará valor cero. Al final de cada ronda se sumará al total de puntos y también valdrá cero si el jugador saca un uno.
++ Vamos a utilizar un bucle `while` para simular la partida. Los bucles ayudan a repetir tareas, en nuestro caso la tarea de tirar el dado una serie rondas hasta llegar a 100 puntos o mas. Como no sabemos cuántas rondas tardará el jugador en llegar a 100 puntos, utilizamos un buble `while`, que se sigue repitiendo mientras se cumpla la condición de que `total_puntos < 100`. 
+
+```{r, eval = FALSE}
+
+max_tiradas <- 5
+total_puntos <- 0
+evolu_puntos <- numeric()
+
+while(total_puntos < 100){
+  parcial <- 0
+  tiradas <- 1
+  while(tiradas <= max_tiradas){
+    resultado <- sample(1:6, 1)
+    if (resultado == 1) {
+      parcial <- 0
+      break
+    }else{
+      parcial <- parcial + resultado    
+      tiradas <- tiradas + 1
+      if(total_puntos + parcial >= 100) break
+    }
+  }
+  evolu_puntos <- append(evolu_puntos, parcial)
+  total_puntos <- total_puntos + parcial
+}
+```
+
+Ahora podemos pintar la evolución de la partida. Para ello acumulamos las puntuaciones parciales a lo largo de las rondas con la función `cumsum`:
+
+```{r, eval = FALSE}
+ggplot() +
+  geom_line(aes(x = 1:length(evolu_puntos), 
+                y = cumsum(evolu_puntos))) +
+  scale_x_continuous(breaks=1:length(evolu_puntos))
+
+```
+
+Algunas preguntas:
+
++ ¿Cuál es la probabilidad de sacar al menos un 1 en 5 tiradas?
++ ¿Es mejor tirar 5 veces o tirar 3?
+
+Para ayudar a responder a esta pregunta, vamos a *enfrentar* dos jugadores: uno es el anterior (que tira como mucho 5 veces en cada ronda) y otro más conservador, que tire como mucho 3 veces:
+
+```{r, eval = FALSE}
+
+max_tiradas1 <- 5
+max_tiradas2 <- 3
+
+total_puntos1 <- 0
+total_puntos2 <- 0
+
+evolu_puntos1 <- numeric()
+evolu_puntos2 <- numeric()
+
+while(total_puntos1 < 100 & total_puntos2 < 100){
+  
+  parcial1 <- 0
+  tiradas1 <- 1
+  while(tiradas1 <= max_tiradas1){
+    resultado <- sample(1:6, 1)
+    if (resultado == 1) {
+      parcial1 <- 0
+      break
+    }else{
+      parcial1 <- parcial1 + resultado    
+      tiradas1 <- tiradas1 + 1
+      if(total_puntos1 + parcial1 >= 100) break
+    }
+  }
+  evolu_puntos1 <- append(evolu_puntos1, parcial1)
+  total_puntos1 <- total_puntos1 + parcial1
+  
+  parcial2 <- 0
+  tiradas2 <- 1
+  while(tiradas2 <= max_tiradas2){
+    resultado <- sample(1:6, 1)
+    if (resultado == 1) {
+      parcial2 <- 0
+      break
+    }else{
+      parcial2 <- parcial2 + resultado    
+      tiradas2 <- tiradas2 + 1
+      if(total_puntos2 + parcial2 >= 100) break
+    }
+  }
+  evolu_puntos2 <- append(evolu_puntos2, parcial2)
+  total_puntos2 <- total_puntos2 + parcial2
+}
+
+ganador <- ifelse(total_puntos1 > total_puntos2, 1, 2)
+rondas <- ifelse(total_puntos1 > total_puntos2, length(evolu_puntos1), length(evolu_puntos2))
+
+print(paste0("Ha ganado el jugador ", ganador, " en ",rondas , " rondas."))
+
+```
+
+Ahora pintamos los resultados de nuevo:
+
+```{r, eval = FALSE}
+ggplot() +
+  geom_line(aes(x = 1:length(evolu_puntos1), 
+                y = cumsum(evolu_puntos1)), col = "red") +
+  geom_line(aes(x = 1:length(evolu_puntos2), 
+                y = cumsum(evolu_puntos2)), col = "blue") +
+  scale_x_continuous(breaks=1:max(length(evolu_puntos1),
+                                  length(evolu_puntos2)))
+
+```
+
+
+**¿Sigues pensando lo mismo que antes?**
+
+La forma de demostrar que una estrategia es mejor que otra es hacer muchas partidas, no sólo una así que vamos a simular el resultado de 1000 partidas. Necesitaremos dos cosas:
+
++ Guardar el ganador de cada partida en una tabla. Eso lo hacemos con la tabla `resultados`, que en R tiene una estructura llamada `tibble`
++ Repetir 1000 veces la partida; esto lo hacemos con un bucle `for`, ya que es este caso sí que sabemos cuántas veces tenemos que repetir la *tarea*:
+
+```{r, eval = FALSE}
+
+max_tiradas1 <- 5
+max_tiradas2 <- 3
+
+partidas <- 1000
+resultados <- tibble(partida = numeric(), ganador = numeric())
+
+
+for (i in 1:partidas)
+{
+  total_puntos1 <- 0
+  total_puntos2 <- 0
+  while(total_puntos1 < 100 & total_puntos2 < 100){
+    
+    parcial1 <- 0
+    tiradas1 <- 1
+    while(tiradas1 <= max_tiradas1){
+      resultado <- sample(1:6, 1)
+      if (resultado == 1) {
+        parcial1 <- 0
+        break
+      }else{
+        parcial1 <- parcial1 + resultado    
+        tiradas1 <- tiradas1 + 1
+        if(total_puntos1 + parcial1 >= 100) break
+      }
+    }
+    total_puntos1 <- total_puntos1 + parcial1
+    
+    parcial2 <- 0
+    tiradas2 <- 1
+    while(tiradas2 <= max_tiradas2){
+      resultado <- sample(1:6, 1)
+      if (resultado == 1) {
+        parcial2 <- 0
+        break
+      }else{
+        parcial2 <- parcial2 + resultado    
+        tiradas2 <- tiradas2 + 1
+        if(total_puntos2 + parcial2 >= 100) break
+      }
+    }
+    total_puntos2 <- total_puntos2 + parcial2
+  }
+  
+  
+  resultados <- add_row(resultados,
+                        partida = i,
+                        ganador = ifelse(total_puntos1 > total_puntos2, 
+                                         1, 
+                                         2))
+}
+
+# Pintamos los resultados
+ggplot(resultados) + geom_bar(aes(ganador))
+
+
+```
+
+**¿Hay alguna estrategia mejor que 5?**
+
+Ahora el jugador 2 cambia de estrategia e intenta superar una cantidad fija de puntos en su tirada, por ejemplo 20 puntos. Tenemos que cambiar algunas cosas, todas ellas relativas al jugador 2:
+
++ Vamos a crear una variable llamada `min_puntos2` que registre el número mínimo de puntos que quiere obtener el jugador 2 (en este caso 20).
++ Ahora el bucle while que gestiona la ronda del jugador 2 tiene la condición `parcial2 <= min_puntos2`:
+
+```{r, eval = FALSE}
+
+max_tiradas1 <- 5
+min_puntos2 <- 20
+
+partidas <- 1000
+resultados <- tibble(partida = numeric(), ganador = numeric())
+
+
+for (i in 1:partidas)
+{
+  total_puntos1 <- 0
+  total_puntos2 <- 0
+  while(total_puntos1 < 100 & total_puntos2 < 100){
+    
+    parcial1 <- 0
+    tiradas1 <- 1
+    while(tiradas1 <= max_tiradas1){
+      resultado <- sample(1:6, 1)
+      if (resultado == 1) {
+        parcial1 <- 0
+        break
+      }else{
+        parcial1 <- parcial1 + resultado    
+        tiradas1 <- tiradas1 + 1
+        if(total_puntos1 + parcial1 >= 100) break
+      }
+    }
+    total_puntos1 <- total_puntos1 + parcial1
+    
+    parcial2 <- 0
+    while(parcial2 <= min_puntos2){
+      resultado <- sample(1:6, 1)
+      if (resultado == 1) {
+        parcial2 <- 0
+        break
+      }else{
+        parcial2 <- parcial2 + resultado    
+        if(total_puntos2 + parcial2 >= 100) break
+      }
+    }
+    total_puntos2 <- total_puntos2 + parcial2
+  }
+  
+  
+  resultados <- add_row(resultados,
+                        partida = i,
+                        ganador = ifelse(total_puntos1 > total_puntos2, 1, 2))
+  
+}
+
+ggplot(resultados) + geom_bar(aes(ganador))
+
+```
+
+Ahora viene un tercer jugador muy agresivo cuya estrategia será superar la puntuación parcial de los dos anteriores. 
+
+**¿Te atreves a rellenar lo huecos?**
+
+
+```{r, eval = FALSE}
+
+max_tiradas1 <- 5
+min_puntos2 <- 20
+
+total_puntos1 <- 0
+total_puntos2 <- 0
+total_puntos3 <- ...
+
+evolu_puntos1 <- numeric()
+evolu_puntos2 <- numeric()
+evolu_puntos3 <- ...
+
+while(total_puntos1 < 100 & total_puntos2 < 100 & ...){
+  
+  parcial1 <- 0
+  tiradas1 <- 1
+  while(tiradas1 <= max_tiradas1){
+    resultado <- sample(1:6, 1)
+    if (resultado == 1) {
+      parcial1 <- 0
+      break
+    }else{
+      parcial1 <- parcial1 + resultado    
+      tiradas1 <- tiradas1 + 1
+      if(total_puntos1 + parcial1 >= 100) break
+    }
+  }
+  evolu_puntos1 <- append(evolu_puntos1, parcial1)
+  total_puntos1 <- total_puntos1 + parcial1
+  
+  parcial2 <- 0
+  while(parcial2 <= min_puntos2){
+    resultado <- sample(1:6, 1)
+    if (resultado == 1) {
+      parcial2 <- 0
+      break
+    }else{
+      parcial2 <- parcial2 + resultado    
+      if(total_puntos2 + parcial2 >= 100) break
+    }
+  }
+  evolu_puntos2 <- append(evolu_puntos2, parcial2)
+  total_puntos2 <- total_puntos2 + parcial2
+  
+  parcial3 <- 0
+  while(parcial3 <= max(parcial1, ...)){
+    resultado <- sample(1:6, 1)
+    if (resultado == 1) {
+      parcial3 <- 0
+      break
+    }else{
+      parcial3 <- parcial3 + resultado    
+      if(total_puntos3 + parcial3 >= 100) break
+    }
+  }
+  evolu_puntos3 <- append(..., ...)
+  total_puntos3 <- total_puntos3 + ...
+}
+
+ganador <- case_when(
+  total_puntos1 >= 100 ~ 1,
+  total_puntos2 >= 100 ~ 2,
+  total_puntos3 >= 100 ~ ...
+)
+
+rondas <- case_when(
+  ganador == 1 ~ length(evolu_puntos1),
+  ganador == 2 ~ length(evolu_puntos2),
+  ganador == 3 ~ length(.__C__.name)
+)
+
+
+print(paste0("Ha ganado el jugador ", ganador, " en ",rondas , " rondas."))
+
+
+```
+
+Pinta la evolución de la partida:
+
+```{r, eval = FALSE}
+ggplot() +
+  geom_line(aes(x = 1:length(evolu_puntos1), 
+                y = cumsum(evolu_puntos1)), 
+            col = "red") +
+  geom_line(aes(x = 1:length(evolu_puntos2), 
+                y = cumsum(evolu_puntos2)), 
+            col = "blue") +
+  geom_line(aes(x = 1:length(...), 
+                y = cumsum(...)), 
+            col = "green") +
+  scale_x_continuous(breaks=1:max(length(evolu_puntos1), 
+                                  length(evolu_puntos2), 
+                                  ...))
+
+```
+
+Como hemos visto antes, con una simulación no vale: hay que hacer muchas.
+
+Antes de eso piensa un poco qué crees que va a salir.
+
+```{r, eval = FALSE}
+
+max_tiradas1 <- 5
+min_puntos2 <- 20
+
+partidas <- 1000
+resultados <- tibble(partida = numeric(), ganador = numeric())
+
+for (...){
+  
+  total_puntos1 <- 0
+  total_puntos2 <- 0
+  total_puntos3 <- 0
+  
+  while(total_puntos1 < 100 & total_puntos2 < 100 & total_puntos3 < 100){
+    
+    parcial1 <- 0
+    tiradas1 <- 1
+    while(tiradas1 <= max_tiradas1){
+      resultado <- sample(1:6, 1)
+      if (resultado == 1) {
+        parcial1 <- 0
+        break
+      }else{
+        parcial1 <- parcial1 + resultado    
+        tiradas1 <- tiradas1 + 1
+        if(total_puntos1 + parcial1 >= 100) break
+      }
+    }
+    total_puntos1 <- total_puntos1 + parcial1
+    
+    parcial2 <- 0
+    while(parcial2 <= min_puntos2){
+      resultado <- sample(1:6, 1)
+      if (resultado == 1) {
+        parcial2 <- 0
+        break
+      }else{
+        parcial2 <- parcial2 + resultado    
+        if(total_puntos2 + parcial2 >= 100) break
+      }
+    }
+    total_puntos2 <- total_puntos2 + parcial2
+    
+    parcial3 <- 0
+    while(parcial3 <= max(parcial1, parcial2)){
+      resultado <- sample(1:6, 1)
+      if (resultado == 1) {
+        parcial3 <- 0
+        break
+      }else{
+        parcial3 <- parcial3 + resultado    
+        if(total_puntos3 + parcial3 >= 100) break
+      }
+    }
+    total_puntos3 <- total_puntos3 + parcial3
+  }
+  
+  
+  resultados <- add_row(resultados,
+                        partida = i,
+                        ganador = ganador <- case_when(
+                          total_puntos1 >= 100 ~ 1,
+                          total_puntos2 >= 100 ~ 2,
+                          total_puntos3 >= 100 ~ 3
+                        )
+  )
+  
+}
+
+ggplot(resultados) + geom_bar(aes(ganador))
+
+
+```
+
+[^1]: The Math Book: From Pythagoras to the 57th Dimension, 250 Milestones in the History of Mathematics (Sterling Milestones)
