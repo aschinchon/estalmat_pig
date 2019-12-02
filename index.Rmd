@@ -283,7 +283,7 @@ ggplot(resultados) + geom_bar(aes(ganador))
 
 Ahora viene un tercer jugador muy agresivo cuya estrategia será superar la puntuación parcial de los dos anteriores. 
 
-**¿Te atreves a rellenar lo huecos?**
+**¿Te atreves a rellenar los huecos?**
 
 
 ```{r, eval = FALSE}
