@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 <meta name="author" content="Antonio Sánchez Chinchón" />
@@ -271,7 +271,6 @@ code {
 }
 img {
   max-width:100%;
-  height: auto;
 }
 .tabbed-pane {
   padding-top: 12px;
@@ -333,6 +332,7 @@ summary {
   border: none;
   display: inline-block;
   border-radius: 4px;
+  background-color: transparent;
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li {
@@ -344,18 +344,6 @@ summary {
   display: none;
 }
 </style>
-
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
 
 <!-- code folding -->
 
@@ -555,7 +543,6 @@ for (i in 1:partidas)
 
 # Pintamos los resultados
 ggplot(resultados) + geom_bar(aes(ganador))</code></pre>
-<p><strong>¿Hay alguna estrategia mejor que 5?</strong></p>
 <p>Ahora el jugador 2 cambia de estrategia e intenta superar una cantidad fija de puntos en su tirada, por ejemplo 20 puntos. Tenemos que cambiar algunas cosas, todas ellas relativas al jugador 2:</p>
 <ul>
 <li>Vamos a crear una variable llamada <code>min_puntos2</code> que registre el número mínimo de puntos que quiere obtener el jugador 2 (en este caso 20).</li>
@@ -612,7 +599,7 @@ for (i in 1:partidas)
 
 ggplot(resultados) + geom_bar(aes(ganador))</code></pre>
 <p>Ahora viene un tercer jugador muy agresivo cuya estrategia será superar la puntuación parcial de los dos anteriores.</p>
-<p><strong>¿Te atreves a rellenar lo huecos?</strong></p>
+<p><strong>¿Te atreves a rellenar los puntos suspensivos?</strong></p>
 <pre class="r"><code>max_tiradas1 &lt;- 5
 min_puntos2 &lt;- 20
 
@@ -680,7 +667,7 @@ ganador &lt;- case_when(
 rondas &lt;- case_when(
   ganador == 1 ~ length(evolu_puntos1),
   ganador == 2 ~ length(evolu_puntos2),
-  ganador == 3 ~ length(.__C__.name)
+  ganador == 3 ~ length(...)
 )
 
 
@@ -795,6 +782,23 @@ $(document).ready(function () {
 
 
 </script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
 <script>
