@@ -219,8 +219,6 @@ ggplot(resultados) + geom_bar(aes(ganador))
 
 ```
 
-**¿Hay alguna estrategia mejor que 5?**
-
 Ahora el jugador 2 cambia de estrategia e intenta superar una cantidad fija de puntos en su tirada, por ejemplo 20 puntos. Tenemos que cambiar algunas cosas, todas ellas relativas al jugador 2:
 
 + Vamos a crear una variable llamada `min_puntos2` que registre el número mínimo de puntos que quiere obtener el jugador 2 (en este caso 20).
@@ -283,7 +281,7 @@ ggplot(resultados) + geom_bar(aes(ganador))
 
 Ahora viene un tercer jugador muy agresivo cuya estrategia será superar la puntuación parcial de los dos anteriores. 
 
-**¿Te atreves a rellenar los huecos?**
+**¿Te atreves a rellenar los puntos suspensivos?**
 
 
 ```{r, eval = FALSE}
@@ -355,7 +353,7 @@ ganador <- case_when(
 rondas <- case_when(
   ganador == 1 ~ length(evolu_puntos1),
   ganador == 2 ~ length(evolu_puntos2),
-  ganador == 3 ~ length(.__C__.name)
+  ganador == 3 ~ length(...)
 )
 
 
